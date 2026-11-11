@@ -38,7 +38,7 @@ for course in Courses(session):
 
 | Category | Classes | Description |
 |----------|---------|-------------|
-| **Courses** | `TopNavCourses`, `Courses`, `CourseList` | Browse courses and download documents |
+| **Courses** | `TopNavCourses`, `Courses`, `CourseList`, `WeblinkFolder`, `Weblink` | Browse courses, download documents and list their weblinks |
 | **Intradesk** | `Intradesk` | Browse and download files from the intradesk |
 | **My Documents** | `MyDocs` | Browse, download, upload and manage your personal documents |
 | **Results** | `Results`, `Reports`, `Periods` | Grades, evaluations, report cards |

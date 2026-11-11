@@ -6,8 +6,8 @@ from smartschool import CourseCondensed, Smartschool, SmartSchoolException, Smar
 from smartschool._common import bs4_html
 
 
-@pytest.fixture
-def course(session: Smartschool) -> CourseCondensed:
+@pytest.fixture(name="course")
+def fixture_course(session: Smartschool) -> CourseCondensed:
     return CourseCondensed(session=session, name="Course", teacher="Teacher", url="url", id=1975, platform_id=49)
 
 
@@ -79,11 +79,10 @@ def test_weblinks_unknown_row(course: CourseCondensed):
 def test_weblinks_capture_fixture_only_when_dev_tracing(course: CourseCondensed, mocker: MockerFixture):
     """Fixture capture is a dev-only side effect, gated behind dev_tracing."""
     save = mocker.patch("smartschool._courses.save_test_response")
-    folder = WeblinkFolder(session=course.session, parent=None, course=course, name="(Root)")
 
-    folder._get_folder_html()  # pylint: disable=protected-access  # white-box test
+    assert course.weblinks
     save.assert_not_called()
 
-    folder.session.dev_tracing = True
-    folder._get_folder_html()  # pylint: disable=protected-access  # white-box test
+    course.session.dev_tracing = True
+    assert course.weblinks
     save.assert_called_once()
