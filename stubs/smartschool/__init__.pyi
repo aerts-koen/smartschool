@@ -15,6 +15,8 @@ from ._courses import FileItem as FileItem
 from ._courses import FolderItem as FolderItem
 from ._courses import InternetShortcut as InternetShortcut
 from ._courses import TopNavCourses as TopNavCourses
+from ._courses import Weblink as Weblink
+from ._courses import WeblinkFolder as WeblinkFolder
 from ._credentials import AppCredentials as AppCredentials
 from ._credentials import Credentials as Credentials
 from ._credentials import EnvCredentials as EnvCredentials
@@ -231,6 +233,8 @@ __all__ = [
     "TopNavCourses",
     "UserCapabilities",
     "UserSeeProperties",
+    "Weblink",
+    "WeblinkFolder",
     "save",
     "send_email",
 ]

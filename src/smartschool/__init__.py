@@ -1,6 +1,6 @@
 from ._agenda import AgendaLesson, AgendaPoster, SmartschoolHours, SmartschoolLessons, SmartschoolMomentInfos
 from ._common import IsSaved, save, send_email
-from ._courses import CourseCondensed, CourseList, Courses, DocumentOrFolderItem, FileItem, FolderItem, InternetShortcut, TopNavCourses
+from ._courses import CourseCondensed, CourseList, Courses, DocumentOrFolderItem, FileItem, FolderItem, InternetShortcut, TopNavCourses, Weblink, WeblinkFolder
 from ._credentials import AppCredentials, Credentials, EnvCredentials, KeyringCredentials, PathCredentials
 from ._exceptions import (
     SmartSchoolAttachmentUploadError,
@@ -207,6 +207,8 @@ __all__ = [
     "TopNavCourses",
     "UserCapabilities",
     "UserSeeProperties",
+    "Weblink",
+    "WeblinkFolder",
     "save",
     "send_email",
 ]

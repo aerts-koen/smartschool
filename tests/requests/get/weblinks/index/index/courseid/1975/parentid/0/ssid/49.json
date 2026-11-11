@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
+<table>
+  <tr>
+    <td>
+      <div class="smsc_cm_breadcrumb">
+        <div class="breadcrumb_url"><a href="/Weblinks/Index/Index/courseID/1975/parentID/0/ssID/49">Weblinks</a></div>
+      </div>
+      <div class="smsc_cm_body">
+      <div id="linkID_101" class="smsc_cm_body_row first">
+        <div class="smsc_cm_body_row_block weblink">
+          <div class="name"><a onclick="showClick('/Weblinks/Showlink/showClick/courseID/1975/linkID/101/ssID/49');" href="/Weblinks/Showlink/Index/courseID/1975/linkID/101/ssID/49" target="_BLANK" class="smsc_cm_link">Woordenboek</a></div>
+          <div class="spacer"></div>
+        </div>
+        <div class="smsc_cm_body_row_block_desc"></div>
+      </div>
+      <div id="linkID_201" class="smsc_cm_body_row">
+        <div class="smsc_cm_body_row_block folder">
+          <div class="name"><a onclick="showClick('');" href="/Weblinks/Index/Index/courseID/1975/parentID/201/ssID/49" class="smsc_cm_link">Oefeningen</a></div>
+          <div class="spacer"></div>
+        </div>
+        <div class="smsc_cm_body_row_block_desc">Extra oefeningen per hoofdstuk</div>
+      </div>
+      <div id="linkID_102" class="smsc_cm_body_row last">
+        <div class="smsc_cm_body_row_block weblink">
+          <div class="name"><a onclick="showClick('/Weblinks/Showlink/showClick/courseID/1975/linkID/102/ssID/49');" href="/Weblinks/Showlink/Index/courseID/1975/linkID/102/ssID/49" target="_BLANK" class="smsc_cm_link">Atlas</a></div>
+          <div class="spacer"></div>
+        </div>
+        <div class="smsc_cm_body_row_block_desc"></div>
+      </div>
+      </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

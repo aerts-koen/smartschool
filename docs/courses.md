@@ -79,3 +79,24 @@ content: bytes = item.download()
 ```
 
 `InternetShortcut` items generate `.url` shortcut files when downloaded.
+
+## Browsing Weblinks
+
+A course's Weblinks section is a separate tree of links, reached through the `weblinks` property. Smartschool
+only hands out a link's address as a redirect, so `Weblink.url` costs one request; the result is cached.
+
+```python
+from smartschool import TopNavCourses, Weblink, WeblinkFolder
+
+def show(items, indent="  "):
+    for item in items:
+        if isinstance(item, WeblinkFolder):
+            print(f"{indent}[folder] {item.name}")
+            show(item.items, indent + "  ")
+        elif isinstance(item, Weblink):
+            print(f"{indent}[link]   {item.name} -> {item.url}")
+
+for course in TopNavCourses(session):
+    print(course.name)
+    show(course.weblinks)
+```
