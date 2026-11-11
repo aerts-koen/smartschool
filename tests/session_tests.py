@@ -254,6 +254,27 @@ class TestAuthenticationFlow:
         assert response.text == "authorized"
         assert len([r for r in requests_mock.request_history if r.url == target]) == 2
 
+    def test_an_unfollowed_redirect_to_the_login_logs_in_and_retries(self, session: Smartschool, requests_mock):
+        """With allow_redirects=False a dead session stops at the redirect to /login: log in, then redo the request."""
+        target = "https://site/Weblinks/Showlink/Index/linkID/1"
+        requests_mock.get(
+            target, [{"status_code": 302, "headers": {"Location": "/login"}}, {"status_code": 302, "headers": {"Location": "https://example.com"}}]
+        )
+
+        response = session.get("/Weblinks/Showlink/Index/linkID/1", allow_redirects=False)
+
+        assert response.headers["Location"] == "https://example.com"
+        assert len([r for r in requests_mock.request_history if r.url == target]) == 2
+
+    def test_an_unfollowed_redirect_elsewhere_is_returned_as_is(self, session: Smartschool, requests_mock):
+        target = "https://site/Weblinks/Showlink/Index/linkID/1"
+        requests_mock.get(target, status_code=302, headers={"Location": "https://example.com/login-help"})
+
+        response = session.get("/Weblinks/Showlink/Index/linkID/1", allow_redirects=False)
+
+        assert response.headers["Location"] == "https://example.com/login-help"
+        assert len([r for r in requests_mock.request_history if r.url == target]) == 1
+
     def test_a_401_that_survives_the_login_raises(self, session: Smartschool, requests_mock):
         """When the server still says 401 after a login, the attempt cap turns it into an authentication failure."""
         target = "https://site/api/v1/forbidden"

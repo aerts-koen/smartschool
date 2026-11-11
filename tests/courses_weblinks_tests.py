@@ -51,6 +51,18 @@ def test_weblink_url_follows_the_redirect(course: CourseCondensed, requests_mock
     assert link.url == "https://example.com/atlas"
 
 
+def test_weblink_url_logs_in_when_the_session_is_dead(course: CourseCondensed, requests_mock: Mocker):
+    """A dead session redirects to /login instead of to the link: log in, then read the real address."""
+    link = course.weblinks[1]
+    assert isinstance(link, Weblink)
+    requests_mock.get(
+        course.session.create_url(link.show_url),
+        [{"status_code": 302, "headers": {"Location": "/login"}}, {"status_code": 302, "headers": {"Location": "https://example.com/atlas"}}],
+    )
+
+    assert link.url == "https://example.com/atlas"
+
+
 def test_weblink_url_without_redirect(course: CourseCondensed, requests_mock: Mocker):
     link = course.weblinks[1]
     assert isinstance(link, Weblink)
