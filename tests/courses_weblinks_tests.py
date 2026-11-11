@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
 from smartschool import CourseCondensed, Smartschool, SmartSchoolException, SmartSchoolParsingError, Weblink, WeblinkFolder
@@ -73,3 +74,16 @@ def test_weblinks_unknown_row(course: CourseCondensed):
 
     with pytest.raises(SmartSchoolParsingError, match="Unknown weblink row"):
         folder._parse_row(row)  # pylint: disable=protected-access  # white-box test
+
+
+def test_weblinks_capture_fixture_only_when_dev_tracing(course: CourseCondensed, mocker: MockerFixture):
+    """Fixture capture is a dev-only side effect, gated behind dev_tracing."""
+    save = mocker.patch("smartschool._courses.save_test_response")
+    folder = WeblinkFolder(session=course.session, parent=None, course=course, name="(Root)")
+
+    folder._get_folder_html()  # pylint: disable=protected-access  # white-box test
+    save.assert_not_called()
+
+    folder.session.dev_tracing = True
+    folder._get_folder_html()  # pylint: disable=protected-access  # white-box test
+    save.assert_called_once()
