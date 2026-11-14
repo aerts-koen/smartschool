@@ -9,13 +9,26 @@ from . import _objects as objects
 from ._common import DownloadableFile
 from ._session import SessionMixin
 
-__all__ = ["CourseCondensed", "CourseList", "Courses", "DocumentOrFolderItem", "FileItem", "FolderItem", "InternetShortcut", "TopNavCourses"]
+__all__ = [
+    "CourseCondensed",
+    "CourseList",
+    "Courses",
+    "DocumentOrFolderItem",
+    "FileItem",
+    "FolderItem",
+    "InternetShortcut",
+    "TopNavCourses",
+    "Weblink",
+    "WeblinkFolder",
+]
 
 @dataclass
 class CourseCondensed(objects.CourseCondensed, SessionMixin):
     def __str__(self) -> str: ...
     @property
     def items(self) -> list[DocumentOrFolderItem]: ...
+    @property
+    def weblinks(self) -> list[Weblink | WeblinkFolder]: ...
 
 @dataclass
 class TopNavCourses(SessionMixin):
@@ -64,3 +77,27 @@ class FolderItem(SessionMixin):
     def items(self) -> list[DocumentOrFolderItem]: ...
 
 DocumentOrFolderItem: TypeAlias = FileItem | FolderItem | InternetShortcut
+
+@dataclass
+class Weblink(SessionMixin):
+    parent: WeblinkFolder
+    id: int
+    name: str
+    description: str = ""
+    show_url: str = ""
+
+    @cached_property
+    def url(self) -> str: ...
+
+@dataclass
+class WeblinkFolder(SessionMixin):
+    parent: WeblinkFolder | None
+    course: CourseCondensed
+    name: str
+    id: int = 0
+    description: str = ""
+
+    @property
+    def browse_url(self) -> str: ...
+    @cached_property
+    def items(self) -> list[Weblink | WeblinkFolder]: ...

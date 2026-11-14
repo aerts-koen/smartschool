@@ -30,7 +30,18 @@ if TYPE_CHECKING:
     from bs4 import BeautifulSoup, Tag
     from requests import Response
 
-__all__ = ["CourseCondensed", "CourseList", "Courses", "DocumentOrFolderItem", "FileItem", "FolderItem", "InternetShortcut", "TopNavCourses"]
+__all__ = [
+    "CourseCondensed",
+    "CourseList",
+    "Courses",
+    "DocumentOrFolderItem",
+    "FileItem",
+    "FolderItem",
+    "InternetShortcut",
+    "TopNavCourses",
+    "Weblink",
+    "WeblinkFolder",
+]
 
 
 _SUFFIX_BY_MIME_TYPE = {
@@ -85,6 +96,10 @@ class CourseCondensed(objects.CourseCondensed, SessionMixin):
     @property
     def items(self) -> list[DocumentOrFolderItem]:
         return FolderItem(session=self.session, parent=None, course=self, name="(Root)").items
+
+    @property
+    def weblinks(self) -> list[Weblink | WeblinkFolder]:
+        return WeblinkFolder(session=self.session, parent=None, course=self, name="(Root)").items
 
 
 @dataclass
@@ -422,3 +437,76 @@ class FolderItem(SessionMixin):
 
 
 DocumentOrFolderItem: TypeAlias = FileItem | FolderItem | InternetShortcut
+
+
+@dataclass
+class Weblink(SessionMixin):
+    """A link in the Weblinks section of a course."""
+
+    parent: WeblinkFolder = field(repr=False)
+    id: int
+    name: str
+    description: str = ""
+    show_url: str = field(default="", repr=False)
+
+    @cached_property
+    def url(self) -> str:
+        """The address the link points to: Smartschool only hands it out as a redirect from `show_url`."""
+        response = self.session.get(self.show_url, allow_redirects=False)
+        return response.headers.get("Location") or self.session.create_url(self.show_url)
+
+
+@dataclass
+class WeblinkFolder(SessionMixin):
+    """
+    A folder in the Weblinks section of a course; the root folder has id 0.
+
+    To reproduce: open a course and click 'Weblinks' (`/Weblinks/Index/Index/courseID/<id>/parentID/<folder>/ssID/<platform>`).
+
+    Example:
+    -------
+    >>> for item in course.weblinks:
+    >>>     if isinstance(item, Weblink):
+    >>>         print(f"{item.name}: {item.url}")
+    Oefeningen: https://example.com/oefeningen
+
+    """
+
+    parent: WeblinkFolder | None = field(repr=False)
+    course: CourseCondensed = field(repr=False)
+    name: str
+    id: int = 0
+    description: str = ""
+
+    @property
+    def browse_url(self) -> str:
+        return f"/Weblinks/Index/Index/courseID/{self.course.id}/parentID/{self.id}/ssID/{self.course.platform_id}"
+
+    def _get_folder_html(self) -> BeautifulSoup:
+        try:
+            response = self.session.get(self.browse_url)
+            response.raise_for_status()
+            if self.session.dev_tracing:  # ponytail: fixture-capture is a dev-only tool, not a runtime side effect
+                save_test_response(response)
+            return bs4_html(response)
+        except Exception as e:
+            raise SmartSchoolException(f"Failed to fetch weblinks HTML: {e}") from e
+
+    def _parse_row(self, row: Tag) -> Weblink | WeblinkFolder:
+        link = _select_one_or_raise(row, "div.name a")
+        name = link.get_text(strip=True, separator="\n")
+        description = desc.get_text(strip=True, separator="\n") if (desc := row.select_one("div.smsc_cm_body_row_block_desc")) else ""
+        href = _str_attribute(link, "href")
+
+        if match := re.search(r"/parentID/(\d+)", href):
+            return WeblinkFolder(session=self.session, parent=self, course=self.course, name=name, id=int(match.group(1)), description=description)
+        if match := re.search(r"/linkID/(\d+)", href):
+            return Weblink(session=self.session, parent=self, id=int(match.group(1)), name=name, description=description, show_url=href)
+        raise SmartSchoolParsingError(f"Unknown weblink row: {href!r}")
+
+    @cached_property
+    def items(self) -> list[Weblink | WeblinkFolder]:
+        """The links and subfolders in this folder, folders first."""
+        rows = self._get_folder_html().select("div.smsc_cm_body_row")
+        items = [self._parse_row(row) for row in rows]
+        return sorted(items, key=lambda x: (0 if isinstance(x, WeblinkFolder) else 1,) + natural_sort(x.name))

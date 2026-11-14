@@ -92,13 +92,14 @@ class Smartschool(Session, DevTracingMixin):
 
     def _handle_auth_redirect(self, response: Response) -> Response:
         """
-        Run the login/verification/2fa chain when the response is an auth page or a bare 401.
+        Run the login/verification/2fa chain when the response asks for a login (see :meth:`_needs_login`).
 
         The XML dispatchers answer a dead session with a 401 instead of redirecting (an empty
-        200 when #165 was written), so that case fetches the login page itself. Any other
-        response is returned unchanged, so callers can invoke this without gating themselves.
+        200 when #165 was written), and a request made with ``allow_redirects=False`` stops at
+        the redirect, so both cases fetch the login page themselves. Any other response is
+        returned unchanged, so callers can invoke this without gating themselves.
         """
-        if not self._is_auth_url(response.url) and response.status_code != 401:
+        if not self._needs_login(response):
             return response
 
         if self._login_attempts >= self._max_login_attempts:
@@ -107,7 +108,7 @@ class Smartschool(Session, DevTracingMixin):
         logger.debug("Auth redirect detected: {}", response.url)
         self._login_attempts += 1
 
-        if not self._is_auth_url(response.url):  # a bare 401: fetch the login page ourselves
+        if not self._is_auth_url(response.url):  # a bare 401 or an unfollowed redirect: fetch the login page ourselves
             response = self._make_traced_request(super().request, "GET", self.create_url("/login"))
         if response.url.endswith("/login"):
             response = self._do_login(response)
@@ -163,6 +164,12 @@ class Smartschool(Session, DevTracingMixin):
 
         return bool(auth_segments & path_segments)
 
+    def _needs_login(self, response: Response) -> bool:
+        """An auth page, a bare 401, or a redirect to an auth page that was not followed (``allow_redirects=False``)."""
+        if self._is_auth_url(response.url) or response.status_code == 401:
+            return True
+        return response.is_redirect and self._is_auth_url(response.headers.get("Location", ""))
+
     def _require_credentials(self) -> Credentials:
         if self.creds is None:
             raise RuntimeError("Smartschool instance must have valid credentials.")
@@ -177,10 +184,10 @@ class Smartschool(Session, DevTracingMixin):
 
         response = self._make_traced_request(super().request, method, full_url, **kwargs)
 
-        # Drive the auth chain when the response is a login page or a bare 401
-        # (a no-op otherwise), remembering that it fired so the caller's
-        # request is redone afterwards.
-        auth_needed = self._is_auth_url(response.url) or response.status_code == 401
+        # Drive the auth chain when the response asks for a login (a no-op
+        # otherwise), remembering that it fired so the caller's request is
+        # redone afterwards.
+        auth_needed = self._needs_login(response)
         response = self._handle_auth_redirect(response)
 
         # Redo the caller's request once logged in — unless the caller was
