@@ -498,9 +498,10 @@ class FullMessage:  # pylint: disable=too-many-instance-attributes  # mirrors th
     total_nr_other_to_reciviers: int
     total_nr_other_cc_receivers: Annotated[int, Field(validation_alias="totalnrOtherCcReceivers")]
     total_nr_other_bcc_receivers: Annotated[int, Field(validation_alias="totalnrOtherBccReceivers")]
-    can_reply: bool
-    has_reply: bool
-    has_forward: bool
+    # Smartschool leaves these empty (None) for some senders, e.g. BookWidgets feedback: treat empty as False.
+    can_reply: Annotated[bool, BeforeValidator(lambda v: bool(v))]
+    has_reply: Annotated[bool, BeforeValidator(lambda v: bool(v))]
+    has_forward: Annotated[bool, BeforeValidator(lambda v: bool(v))]
     send_date: DateTime | None
     from_: String = Field(validation_alias=AliasChoices("from", "from_"))
     colored_flag: int = Field(default=0, validation_alias=AliasChoices("colored_flag", "label"))

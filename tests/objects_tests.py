@@ -76,3 +76,16 @@ def test_message_search_user_accepts_both_spellings_and_reports_the_one_used():
 
     assert [error["loc"] for error in by_field_name.value.errors()] == [("user_id",)]
     assert [error["loc"] for error in by_api_alias.value.errors()] == [("userID",)]
+
+
+def test_full_message_accepts_empty_reply_flags():
+    """Smartschool sends None for can_reply/has_reply/has_forward on some messages (e.g. BookWidgets feedback)."""
+    from smartschool._objects import FullMessage
+
+    msg = FullMessage(
+        id=1, to=None, subject="Feedback", date="2026-11-14 10:00", body=None, status=0, attachment=0, unread=True,
+        receivers=[], ccreceivers=[], bccreceivers=[], sender_picture="", markedInLVS=None, from_team=0,
+        total_nr_other_to_reciviers=0, totalnrOtherCcReceivers=0, totalnrOtherBccReceivers=0,
+        can_reply=None, has_reply=None, has_forward=None, send_date=None, **{"from": "BookWidgets"},
+    )
+    assert msg.can_reply is False and msg.has_reply is False and msg.has_forward is False
